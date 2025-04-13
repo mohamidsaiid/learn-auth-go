@@ -2,14 +2,15 @@ package routes
 
 import (
 	"jwt/internal/handlers"
+	"github.com/julienschmidt/httprouter"
 	"net/http"
 )
 
 func Routes() http.Handler{
-	mux := http.NewServeMux()
+	router := httprouter.New()
 
-	mux.HandleFunc("/signin", handlers.Signin)
-	mux.HandleFunc("/login", handlers.Login)
-	mux.HandleFunc("/token", handlers.TestToken)
-	return mux
+	router.HandlerFunc(http.MethodPost, "/signin", handlers.Signin)
+	router.HandlerFunc(http.MethodPost, "/login", handlers.Login)
+	router.HandlerFunc(http.MethodGet, "/token", handlers.TestToken)
+	return router
 }
