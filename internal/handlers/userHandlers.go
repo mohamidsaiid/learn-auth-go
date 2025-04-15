@@ -22,8 +22,7 @@ func Signup(w http.ResponseWriter, r *http.Request) {
 		helpers.ServerErrorResponse(w, r, err)
 		return
 	}
-	// check if user in database
-	// if no create one else write to the request
+
 	err = models.CreateUser(input.Email, input.Password)
 	if err != nil {
 		helpers.CustomErrorResponse(w, r, err, "user is already regestered")
