@@ -2,8 +2,10 @@ package routes
 
 import (
 	"jwt/internal/handlers"
-	"github.com/julienschmidt/httprouter"
+	"jwt/internal/middleware"
 	"net/http"
+
+	"github.com/julienschmidt/httprouter"
 )
 
 func Routes() http.Handler{
@@ -11,6 +13,6 @@ func Routes() http.Handler{
 
 	router.HandlerFunc(http.MethodPost, "/signup", handlers.Signup)
 	router.HandlerFunc(http.MethodPost, "/login", handlers.Login)
-	router.HandlerFunc(http.MethodGet, "/token", handlers.TestToken)
+	router.HandlerFunc(http.MethodGet, "/token", middleware.AuthMiddleware(handlers.TestToken))
 	return router
 }

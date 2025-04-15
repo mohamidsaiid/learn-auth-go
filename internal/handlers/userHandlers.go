@@ -6,9 +6,6 @@ import (
 	"jwt/internal/jsonView"
 	"jwt/internal/models"
 	"net/http"
-	"strings"
-
-	"github.com/golang-jwt/jwt/v5"
 )
 
 func Signup(w http.ResponseWriter, r *http.Request) {
@@ -69,27 +66,14 @@ func Login(w http.ResponseWriter, r *http.Request) {
 }
 
 func TestToken(w http.ResponseWriter, r *http.Request) {
-	token := r.Header.Get("Authorization")
-	if token == "" {
-		helpers.CustomErrorResponse(w, r, errors.New("didn't provide a token"), "Missing authorization header")
-		return
-	}
 
-	tokenString, _ := strings.CutPrefix(token, "Bearer ")
-
-	t, err := helpers.ValidateToken(tokenString)
-	if err != nil {
-		helpers.ServerErrorResponse(w, r, err)
-		return
-	}
-
-	claims, ok := t.Claims.(jwt.MapClaims)
+	claims, ok := helpers.GetClaims(r)
 	if !ok {
 		helpers.ServerErrorResponse(w, r, errors.New("not valid token"))
 		return
 	}
 
-	err = jsonView.WriteJSON(w, http.StatusOK, map[string]any{"Email": claims["email"]})
+	err := jsonView.WriteJSON(w, http.StatusOK, map[string]any{"Email": claims["email"]})
 	if err != nil {
 		helpers.ServerErrorResponse(w, r, err)
 	}
