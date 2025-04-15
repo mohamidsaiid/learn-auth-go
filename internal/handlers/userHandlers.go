@@ -1,41 +1,32 @@
 package handlers
 
 import (
-	"encoding/json"
+	"errors"
 	"jwt/internal/helpers"
-	"jwt/internal/initializers"
 	"jwt/internal/jsonView"
 	"jwt/internal/models"
 	"net/http"
 	"strings"
-	"errors"
 
 	"github.com/golang-jwt/jwt/v5"
-	"golang.org/x/crypto/bcrypt"
 )
 
-func Signin(w http.ResponseWriter, r *http.Request) {
+func Signup(w http.ResponseWriter, r *http.Request) {
 	var input struct {
 		Email    string `json:"email"`
 		Password string `json:"password"`
 	}
 
-	dec := json.NewDecoder(r.Body)
-	err := dec.Decode(&input)
+	err := jsonView.ReadJSON(w, r, &input)
 	if err != nil {
 		helpers.ServerErrorResponse(w, r, err)
 		return
 	}
-
-	hashed, err := bcrypt.GenerateFromPassword([]byte(input.Password), 10)
+	// check if user in database
+	// if no create one else write to the request
+	err = models.CreateUser(input.Email, input.Password)
 	if err != nil {
-		helpers.ServerErrorResponse(w, r, err)
-		return
-	}
-
-	res := initializers.DB.Create(&models.User{Email: input.Email, Password: string(hashed)})
-	if res.Error != nil {
-		helpers.CustomErrorResponse(w, r, res.Error, "this user is already in db")
+		helpers.CustomErrorResponse(w, r, err, "user is already regestered")
 		return
 	}
 
@@ -59,20 +50,13 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var user models.User
-	initializers.DB.First(&user, "email = ?", input.Email)
-	if user.ID == 0 {
-		helpers.ServerErrorResponse(w, r, errors.New("didn't find the record"))
-		return
-	}
-
-	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(input.Password))
+	id, err := models.FindUser(input.Email, input.Password)
 	if err != nil {
-		helpers.ServerErrorResponse(w, r, err)
+		helpers.CustomErrorResponse(w, r, err, "email or password isn't correct")
 		return
 	}
 
-	token, err := helpers.CreateToken(user)
+	token, err := helpers.CreateToken(id, input.Email)
 	if err != nil {
 		helpers.ServerErrorResponse(w, r, err)
 		return
@@ -98,7 +82,7 @@ func TestToken(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		helpers.ServerErrorResponse(w, r, err)
 		return
-	}	
+	}
 
 	claims, ok := t.Claims.(jwt.MapClaims)
 	if !ok {
@@ -106,7 +90,7 @@ func TestToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = jsonView.WriteJSON(w, http.StatusOK, map[string]any{"Email":claims["email"]})
+	err = jsonView.WriteJSON(w, http.StatusOK, map[string]any{"Email": claims["email"]})
 	if err != nil {
 		helpers.ServerErrorResponse(w, r, err)
 	}

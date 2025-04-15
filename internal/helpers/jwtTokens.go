@@ -1,7 +1,6 @@
 package helpers
 
 import (
-	"jwt/internal/models"
 	"os"
 
 	"time"
@@ -9,12 +8,11 @@ import (
 )
 
 
-func CreateToken(user models.User) (string, error) {
+func CreateToken(id uint, email string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"sub":   user.ID,
+		"sub":   id,
 		"exp":   time.Now().Add(time.Hour).Unix(),
-		"email": user.Email,
-		"admin": true,
+		"email": email,
 	})
 
 	tokenString, err := token.SignedString([]byte(os.Getenv("SECRET_KEY")))

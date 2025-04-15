@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"jwt/internal/helpers"
 	"jwt/internal/initializers"
+	"jwt/internal/models"
 	"jwt/internal/routes"
 	"net/http"
 	"os"
@@ -12,7 +13,7 @@ import (
 func init() {
 	initializers.LoadEnvVar()
 	initializers.ConnectToDB()
-	initializers.SyncDB()
+	models.SyncDB()
 }
 
 func main() {
